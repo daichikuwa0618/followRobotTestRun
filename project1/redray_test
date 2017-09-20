@@ -1,0 +1,29 @@
+# coding=utf-8
+#!/usr/bin/env python
+
+import RPi.GPIO as GPIO
+import smbus
+from time import sleep
+
+GPIO.setmode(GPIO.BCM)
+GPIO.setwarnings(False)
+
+GPIO.setup(15,GPIO.OUT)
+i2c=smbus.SMbus(1)
+
+GPIO.output(15,1)
+sleep(0.1)
+i2c.write_byte_data(0x40,0xEC,0xFF)
+sleep(0.1)
+GPIO.output(15.0)
+sleep(0.1)
+i2c.write_byte_data(0x40,0xC8,0x00)
+sleep(0.1)
+i2c.write_byte_data(0x40,0xC9,0x45)
+sleep(0.1)
+i2c.write_byte_data(0x40,0xCD,0x40)
+sleep(0.1)
+i2c.write_byte_data(0x40,0xCA,0x01)
+sleep(0.1)
+
+GPIO.output(15.1)
