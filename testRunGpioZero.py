@@ -2,6 +2,7 @@
 #!/usr/bin/env python
 
 # project1/test_run.py のコピーをし、ADC部分を改良したプログラム
+# とりあえずレーザレンジファインダーは使わない方向
 
 """モジュールインポート"""
 import RPi.GPIO as GPIO
@@ -175,12 +176,13 @@ def READSensor():
 # GPIOzeroを用いた赤外線センサの使用(追加部分)
 def gpioZeroReadSensor():
     global error, signal
-    adcTuple = (adc0.value, adc1.value, adc2.value, adc.value)
+    adcList = [adc0.value, adc1.value, adc2.value, adc.value]
     for i in range(4):
-        if adcTuple[i] > 0.5:
+        if adcList[i] > 0.5:
             signal |= (0x1 << i)
         else:
             signal &= ~(0x1 << ch)
+        print("sensor" + str(i) + "=" + str(adcList[i]))
 
     # Bit Judge
     if (signal & 0xF) != 0:
