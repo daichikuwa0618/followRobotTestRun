@@ -105,7 +105,7 @@ def stop():
     time.sleep(0.1)
 
 """
-"""センサ取得関数"""
+# センサ取得関数
 #i2cを用いた赤外線センサーの関数
 def ReadSensor():
     global error
@@ -176,12 +176,12 @@ def READSensor():
 # GPIOzeroを用いた赤外線センサの使用(追加部分)
 def gpioZeroReadSensor():
     global error, signal
-    adcList = [adc0.value, adc1.value, adc2.value, adc.value]
+    adcList = [adc0.value, adc1.value, adc2.value, adc3.value]
     for i in range(4):
         if adcList[i] > 0.5:
             signal |= (0x1 << i)
         else:
-            signal &= ~(0x1 << ch)
+            signal &= ~(0x1 << i)
         print("sensor" + str(i) + "=" + str(adcList[i]))
 
     # Bit Judge
