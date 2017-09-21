@@ -217,15 +217,15 @@ if __name__ == '__main__':
         threadFlg = 0        #threadFlg 0:OFF 1:ON
         forwardflg = 0
         errorflg = 0
-        a = threading.Thread(target=DETECT3.setup)
-        a.start()          #周囲の情報取得
+        #a = threading.Thread(target=DETECT3.setup)
+        #a.start()          #周囲の情報取得
         t = threading.Thread(target=sensorLoop)
         t.start()
         time.sleep(3)      #情報取得までのインターバル
         while True:
             #変数更新
-            dst = DETECT3.dst2
-            deg = DETECT3.degs2 #角度は時計回り
+            #dst = DETECT3.dst2
+            #deg = DETECT3.degs2 #角度は時計回り
             time.sleep(0.1)    #インターバル(不要かもしれない)
             length = dst[deg]
             if length < 10:
@@ -240,12 +240,14 @@ if __name__ == '__main__':
             if error == 1:
                 forwardflg = 0
                 errorflg = 1
+            """
             if length == 0 or (used_dst == dst and used_deg == deg):
                 #検出できなかった場合
                 count = count + 1
                 if count == 10:
                     stop()
                     forwardflg = 0
+            """
             elif (-30 <= deg ) and (deg <= 30):
                 #±30degなら誤差範囲内
                 used_dst = dst
@@ -286,5 +288,5 @@ if __name__ == '__main__':
     finally:
         stop()
         GPIO.cleanup()
-        a._Thread__stop()   #マルチスレッドを強制終了
+        #a._Thread__stop()   #マルチスレッドを強制終了
         t._Thread__stop()   #マルチスレッドを強制終了
