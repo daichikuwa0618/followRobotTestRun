@@ -164,7 +164,7 @@ def READSensor():
 
     #Bit Jadge---要修正
     if (signal & 0xF) != 0:
-        #Bit Jadge True
+        #Bit Judge True
         print ("現在反応しているセンサは" + str(signal) + "の番号です")
         error = 1
         stop()
