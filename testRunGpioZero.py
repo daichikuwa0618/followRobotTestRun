@@ -116,7 +116,7 @@ def ReadSensor():
         error = 2
         stop()
         return error
-
+"""
 #ADコンバータを用いた赤外線センサーの関数
 def READSensor():
     i = 0
@@ -171,7 +171,7 @@ def READSensor():
         #return error
     else:
         error = 0
-"""
+
 
 # GPIOzeroを用いた赤外線センサの使用(追加部分)
 def gpioZeroReadSensor():
@@ -196,12 +196,13 @@ def gpioZeroReadSensor():
 
 def sensorLoop():
     while True:
-        #READSensor()
-        gpioZeroReadSensor()
+        READSensor()
+        #gpioZeroReadSensor()
         time.sleep(0.1)
 
 if __name__ == '__main__':
     setup()
+    stop()
     try:
         #井上研との共同実験モード
         GPIO.output(sensor_switch, 1)   #赤外線センサを有効化
@@ -251,14 +252,16 @@ if __name__ == '__main__':
                     stop()
                     forwardflg = 0
             """
-            elif (-30 <= deg ) and (deg <= 30):
+            #elif (-30 <= deg ) and (deg <= 30):
+            # 上のifを無くしたのでelif -> ifに変更
+            if (-30 <= deg ) and (deg <= 30):
                 #±30degなら誤差範囲内
                 used_dst = dst
                 used_deg = deg
                 count = 0
                 if forwardflg == 0 and errorflg == 0:
                     print ("前進")
-                    forward(100)
+                    forward(50)
                     forwardflg = 1
                 if errorflg == 1:
                     errorflg -= 1
