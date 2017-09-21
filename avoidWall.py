@@ -46,7 +46,7 @@ length = 0
 error = 0
 signal = 0
 # センサーの値
-sensorList = []
+sensorList = [0, 0, 0]
 # 近いと判断する閾値
 NEAR = 2300
 
