@@ -223,6 +223,9 @@ if __name__ == '__main__':
         t.start()
         time.sleep(3)      #情報取得までのインターバル
         while True:
+            # LRFが使えないため、手動で与える(テスト走行)
+            deg = 0
+            dst[deg] = 20
             #変数更新
             #dst = DETECT3.dst2
             #deg = DETECT3.degs2 #角度は時計回り
