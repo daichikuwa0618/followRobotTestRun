@@ -107,8 +107,8 @@ def stop():
 # ADコンバータを用いた赤外線センサーの関数
 # センサの値に応じて逃げるべきかも判断する
 def readSensor():
-    global error, sensorList
-
+    i = 0
+    global error
     # chの数だけ読み込み、リストに格納する
     for ch in range(3):
         GPIO.output(spi_ss, 0)
@@ -140,10 +140,10 @@ def readSensor():
             if (GPIO.input(spi_miso)):
                 value |= 0x1
             GPIO.output(spi_clk, 0)
-        sensorList[ch] = value
 
         GPIO.output(spi_ss, 1)
 
+        sensorList[ch] = value
         if sensorList[ch] > 2300:
             print ("現在反応しているセンサは" + str(ch) + "の番号です")
 
