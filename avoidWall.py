@@ -13,7 +13,6 @@ import time
 import smbus
 import sys
 import threading
-import DETECT3  #井上研のプログラム修正版
 from gpiozero import MCP3208 # ADCを使用するパッケージ
 import numpy as np
 
@@ -70,40 +69,40 @@ def setup():
 
     """モータ関数"""
     #前進
-    def forward(pwm):
-        wiringpi2.softPwmWrite(IN1, pwm)
-        wiringpi2.softPwmWrite(IN2, 0)
-        wiringpi2.softPwmWrite(IN3, pwm)
-        wiringpi2.softPwmWrite(IN4, 0)
+def forward(pwm):
+    wiringpi2.softPwmWrite(IN1, pwm)
+    wiringpi2.softPwmWrite(IN2, 0)
+    wiringpi2.softPwmWrite(IN3, pwm)
+    wiringpi2.softPwmWrite(IN4, 0)
 
-    # 後退
-    def back(pwm):
-        wiringpi2.softPwmWrite(IN1, 0)
-        wiringpi2.softPwmWrite(IN2, pwm)
-        wiringpi2.softPwmWrite(IN3, 0)
-        wiringpi2.softPwmWrite(IN4, pwm)
+# 後退
+def back(pwm):
+    wiringpi2.softPwmWrite(IN1, 0)
+    wiringpi2.softPwmWrite(IN2, pwm)
+    wiringpi2.softPwmWrite(IN3, 0)
+    wiringpi2.softPwmWrite(IN4, pwm)
 
-    # clockwise
-    def clockwise(pwm):
-        wiringpi2.softPwmWrite(IN1, 0)
-        wiringpi2.softPwmWrite(IN2, pwm)
-        wiringpi2.softPwmWrite(IN3, pwm)
-        wiringpi2.softPwmWrite(IN4, 0)
+# clockwise
+def clockwise(pwm):
+    wiringpi2.softPwmWrite(IN1, 0)
+    wiringpi2.softPwmWrite(IN2, pwm)
+    wiringpi2.softPwmWrite(IN3, pwm)
+    wiringpi2.softPwmWrite(IN4, 0)
 
-    # cclockwise
-    def cclockwise(pwm):
-        wiringpi2.softPwmWrite(IN1, pwm)
-        wiringpi2.softPwmWrite(IN2, 0)
-        wiringpi2.softPwmWrite(IN3, 0)
-        wiringpi2.softPwmWrite(IN4, pwm)
+# cclockwise
+def cclockwise(pwm):
+    wiringpi2.softPwmWrite(IN1, pwm)
+    wiringpi2.softPwmWrite(IN2, 0)
+    wiringpi2.softPwmWrite(IN3, 0)
+    wiringpi2.softPwmWrite(IN4, pwm)
 
-    # stop
-    def stop():
-        wiringpi2.softPwmWrite(IN1, 100)
-        wiringpi2.softPwmWrite(IN2, 100)
-        wiringpi2.softPwmWrite(IN3, 100)
-        wiringpi2.softPwmWrite(IN4, 100)
-        time.sleep(0.1)
+# stop
+def stop():
+    wiringpi2.softPwmWrite(IN1, 100)
+    wiringpi2.softPwmWrite(IN2, 100)
+    wiringpi2.softPwmWrite(IN3, 100)
+    wiringpi2.softPwmWrite(IN4, 100)
+    time.sleep(0.1)
 
 # ADコンバータを用いた赤外線センサーの関数
 # センサの値に応じて逃げるべきかも判断する
@@ -134,15 +133,21 @@ def readSensor():
         #ここまでch指定
 
         #センサーの値を格納する変数
-        sensorList[ch] = 0
+        value = 0
         for i in range(12):
-            sensorList <<= 1
+            value <<= 1
             GPIO.output(spi_clk, 1)
             if (GPIO.input(spi_miso)):
-                sensorList[ch] |= 0x1
+                value |= 0x1
             GPIO.output(spi_clk, 0)
+        sensorList[ch] = value
 
         GPIO.output(spi_ss, 1)
+
+        if sensorList[ch] > 2300:
+            print ("現在反応しているセンサは" + str(ch) + "の番号です")
+
+    print (sensorList)
 
     # 逃げるかの判断
     if np.sqrt(sensorList[1] ** 2 + (sensorList[0] + sensorList[2]) ** 2) > NEAR:
@@ -152,12 +157,29 @@ def readSensor():
 
 # 実際に逃げる関数
 def avoidWall(value):
+    # 角度から秒数に変換する定数
+    turnTime = 90
     stop()
     time.sleep(0.5)
     back(25)
 
+    # 逃げる角度
     degree = 180
+    # 180degからどれだけ回転するのか
+    cwDeg = np.atan2(sensorList[2]/sensorList[1])
+    ccwDeg = np.atan2(sensorList[0]/sensorList[1])
+    # 角度の補正
+    degree = degree + cwDeg - ccwDeg
 
+    # cw回転
+    if degree <= 180:
+        clockwise(50)
+        time.sleep(degree / turnTime)
+
+    # ccw回転
+    else:
+        cclockwise(50)
+        time.sleep((360 - degree) / turnTime)
 
 
 def sensorLoop():
@@ -177,17 +199,17 @@ if __name__ == '__main__':
         time.sleep(3)      #情報取得までのインターバル
         while True:
             if error == 0:
-                forward()
-
+                forward(50)
             # error = 1の時
             else:
+                print("avoiding")
                 avoidWall(sensorList)
             if jikan < (time.time() - times):
                 print ("End of running")
                 break
     finally:
         stop()
-        GPIO.clean()
+        GPIO.cleanup()
         t._Thread__stop() #マルチスレッドの強制終了
 
 # end of program
