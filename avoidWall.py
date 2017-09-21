@@ -46,7 +46,7 @@ length = 0
 error = 0
 signal = 0
 # センサーの値
-sensorList = [0, 0, 0]
+sensorList = []
 # 近いと判断する閾値
 NEAR = 2300
 
@@ -157,6 +157,8 @@ def readSensor():
 
 # 実際に逃げる関数
 def avoidWall(value):
+    # センサの配置
+    # ch0:右 ch1:正面 ch2:左
     # 角度から秒数に変換する定数
     turnTime = 90
     stop()
@@ -166,8 +168,8 @@ def avoidWall(value):
     # 逃げる角度
     degree = 180
     # 180degからどれだけ回転するのか
-    cwDeg = np.atan2(sensorList[2]/sensorList[1])
-    ccwDeg = np.atan2(sensorList[0]/sensorList[1])
+    cwDeg = np.arctan2(sensorList[2]/sensorList[1])
+    ccwDeg = np.arctan2(sensorList[0]/sensorList[1])
     # 角度の補正
     degree = degree + cwDeg - ccwDeg
 
