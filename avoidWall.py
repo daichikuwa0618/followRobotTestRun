@@ -15,6 +15,7 @@ import sys
 import threading
 import DETECT3  #井上研のプログラム修正版
 from gpiozero import MCP3208 # ADCを使用するパッケージ
+import numpy as np
 
 adc0 = MCP3208(channel = 0)
 adc1 = MCP3208(channel = 1)
@@ -45,6 +46,10 @@ deg = 0
 length = 0
 error = 0
 signal = 0
+# センサーの値
+sensorList = [0, 0, 0]
+# 近いと判断する閾値
+NEAR = 2300
 
 def setup():
     GPIO.setmode(GPIO.BCM)
@@ -100,13 +105,13 @@ def setup():
         wiringpi2.softPwmWrite(IN4, 100)
         time.sleep(0.1)
 
-#ADコンバータを用いた赤外線センサーの関数
+# ADコンバータを用いた赤外線センサーの関数
+# センサの値に応じて逃げるべきかも判断する
 def readSensor():
-    i = 0
-    global error, signal
-    #使用しているchの数だけrangeの中の値を変更する
+    global error, sensorList
+
+    # chの数だけ読み込み、リストに格納する
     for ch in range(3):
-        #ReadSensor()
         GPIO.output(spi_ss, 0)
         GPIO.output(spi_clk, 0)
         GPIO.output(spi_mosi, 0)
@@ -129,35 +134,35 @@ def readSensor():
         #ここまでch指定
 
         #センサーの値を格納する変数
-        value = 0
+        sensorList[ch] = 0
         for i in range(12):
-            value <<= 1
+            sensorList <<= 1
             GPIO.output(spi_clk, 1)
             if (GPIO.input(spi_miso)):
-                value |= 0x1
+                sensorList[ch] |= 0x1
             GPIO.output(spi_clk, 0)
 
         GPIO.output(spi_ss, 1)
-        #2000=閾値、この値によって壁の検知を行う
-        #閾値を大きくすると、距離が短くなる
-        if (value > 2300):
-            signal |= (0x1 << ch)
-        else:
-            signal &= ~(0x1 << ch)
 
-    #Bit Jadge---要修正
-    if (signal & 0xF) != 0:
-        #Bit Jadge True
-        print ("現在反応しているセンサは" + str(signal) + "の番号です")
+    # 逃げるかの判断
+    if np.sqrt(sensorList[1] ** 2 + (sensorList[0] + sensorList[2]) ** 2) > NEAR:
         error = 1
-        stop()
-        #return error
     else:
         error = 0
 
+# 実際に逃げる関数
+def avoidWall(value):
+    stop()
+    time.sleep(0.5)
+    back(25)
+
+    degree = 180
+
+
+
 def sensorLoop():
     while True:
-        READSensor()
+        readSensor()
         #gpioZeroReadSensor()
         time.sleep(0.1)
 
@@ -165,7 +170,21 @@ if __name__ == '__main__':
     setup()
     stop()
     try:
+        print ("Automatic running...")
+        times = time.time()
+        t = threading.Thread(target=sensorLoop)
+        t.start()
+        time.sleep(3)      #情報取得までのインターバル
+        while True:
+            if error == 0:
+                forward()
 
+            # error = 1の時
+            else:
+                avoidWall(sensorList)
+            if jikan < (time.time() - times):
+                print ("End of running")
+                break
     finally:
         stop()
         GPIO.clean()
