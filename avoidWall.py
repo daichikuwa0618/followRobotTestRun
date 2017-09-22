@@ -38,10 +38,12 @@ deg = 0
 length = 0
 error = 0
 signal = 0
+"""
 # センサーの値
 sensorValue0 = 0
 sensorValue1 = 0
 sensorValue2 = 0
+"""
 # 近いと判断する閾値
 NEAR = 2300
 
@@ -199,18 +201,17 @@ def sensorLoop():
     while True:
         readSensor()
         #gpioZeroReadSensor()
-        time.sleep(0.1)
+        time.sleep(0.2)
 
 if __name__ == '__main__':
     setup()
     try:
         print ("wait...")
-        time.sleep(10)
-        print ("Automatic running...")
-        times = time.time()
         t = threading.Thread(target=sensorLoop)
         t.start()
-        time.sleep(3)      #情報取得までのインターバル
+        time.sleep(wait_time)
+        print ("Automatic running...")
+        times = time.time()
         while True:
             #print ("[" + str(sensorValue0) + "," + str(sensorValue1) + "," + str(sensorValue2) + "]")
             if error == 0:

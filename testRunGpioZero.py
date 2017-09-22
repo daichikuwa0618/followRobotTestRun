@@ -173,7 +173,7 @@ def READSensor():
     else:
         error = 0
 
-
+"""
 # GPIOzeroを用いた赤外線センサの使用(追加部分)
 def gpioZeroReadSensor():
     global error, signal
@@ -194,6 +194,7 @@ def gpioZeroReadSensor():
         #return error
     else:
         error = 0
+"""
 
 def sensorLoop():
     while True:
