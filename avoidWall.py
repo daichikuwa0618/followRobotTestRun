@@ -108,9 +108,10 @@ def stop():
 # センサの値に応じて逃げるべきかも判断する
 def readSensor():
     i = 0
-    global error
-    # chの数だけ読み込み、リストに格納する
+    global error, signal
+    #使用しているchの数だけrangeの中の値を変更する
     for ch in range(3):
+        #ReadSensor()
         GPIO.output(spi_ss, 0)
         GPIO.output(spi_clk, 0)
         GPIO.output(spi_mosi, 0)
@@ -143,14 +144,15 @@ def readSensor():
 
         GPIO.output(spi_ss, 1)
 
+        if (value > 2300):
+            print ("The channel of responsing:" + str(ch))
+
         sensorList[ch] = value
-        if sensorList[ch] > 2300:
-            print ("現在反応しているセンサは" + str(ch) + "の番号です")
 
     print (sensorList)
 
     # 逃げるかの判断
-    if np.sqrt(sensorList[1] ** 2 + (sensorList[0] + sensorList[2]) ** 2) > NEAR:
+    if np.sqrt((sensorList[1] ** 2) + ((sensorList[0] + sensorList[2]) ** 2)) > NEAR:
         error = 1
     else:
         error = 0
@@ -162,8 +164,10 @@ def avoidWall(value):
     # 角度から秒数に変換する定数
     turnTime = 90
     stop()
-    time.sleep(0.5)
+    # 少し後退する
     back(25)
+    time.sleep(1)
+    stop()
 
     # 逃げる角度
     degree = 180
