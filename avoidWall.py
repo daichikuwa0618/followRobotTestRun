@@ -139,6 +139,8 @@ def readSensor():
             GPIO.output(spi_clk, 0)
 
         GPIO.output(spi_ss, 1)
+        
+        print ("ch:" + str(ch) + ", value:" + str(value))
 
         if (value > 2300):
             print ("The channel of responsing:" + str(ch))
@@ -210,7 +212,7 @@ if __name__ == '__main__':
         t.start()
         time.sleep(3)      #情報取得までのインターバル
         while True:
-            print ("[" + str(sensorValue0) + "," + str(sensorValue1) + "," + str(sensorValue2) + "]")
+            #print ("[" + str(sensorValue0) + "," + str(sensorValue1) + "," + str(sensorValue2) + "]")
             if error == 0:
                 forward(50)
             # error = 1の時
