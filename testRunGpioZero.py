@@ -157,6 +157,7 @@ def READSensor():
         GPIO.output(spi_ss, 1)
         #2000=閾値、この値によって壁の検知を行う
         #閾値を大きくすると、距離が短くなる
+        print ("ch:" + str(ch) + ", value:" + str(value))
         if (value > 2300):
             signal |= (0x1 << ch)
         else:
@@ -172,7 +173,7 @@ def READSensor():
     else:
         error = 0
 
-
+"""
 # GPIOzeroを用いた赤外線センサの使用(追加部分)
 def gpioZeroReadSensor():
     global error, signal
@@ -193,6 +194,7 @@ def gpioZeroReadSensor():
         #return error
     else:
         error = 0
+"""
 
 def sensorLoop():
     while True:
