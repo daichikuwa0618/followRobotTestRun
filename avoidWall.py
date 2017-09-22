@@ -57,15 +57,16 @@ def setup():
     wiringpi2.pinMode(IN2, wiringpi2.GPIO.PWM_OUTPUT)
     wiringpi2.pinMode(IN3, wiringpi2.GPIO.PWM_OUTPUT)
     wiringpi2.pinMode(IN4, wiringpi2.GPIO.PWM_OUTPUT)
-    wiringpi2.softPwmCreate(IN1, 0, 100)
-    wiringpi2.softPwmCreate(IN2, 0, 100)
-    wiringpi2.softPwmCreate(IN3, 0, 100)
-    wiringpi2.softPwmCreate(IN4, 0, 100)
+    # 初期値から停止させておく
+    wiringpi2.softPwmCreate(IN1, 100, 100)
+    wiringpi2.softPwmCreate(IN2, 100, 100)
+    wiringpi2.softPwmCreate(IN3, 100, 100)
+    wiringpi2.softPwmCreate(IN4, 100, 100)
     GPIO.setup(spi_mosi, GPIO.OUT)
     GPIO.setup(spi_miso, GPIO.IN)
     GPIO.setup(spi_clk, GPIO.OUT)
     GPIO.setup(spi_ss, GPIO.OUT)
-    GPIO.setup(sensor_switch,GPIO.OUT)
+    #GPIO.setup(sensor_switch,GPIO.OUT)
 
     """モータ関数"""
     #前進
@@ -149,8 +150,6 @@ def readSensor():
 
         sensorList[ch] = value
 
-    print (sensorList)
-
     # 逃げるかの判断
     if np.sqrt((sensorList[1] ** 2) + ((sensorList[0] + sensorList[2]) ** 2)) > NEAR:
         error = 1
@@ -171,6 +170,9 @@ def avoidWall(value):
 
     # 逃げる角度
     degree = 180
+    # ZeroDevisionError回避
+    if sensorList[1] == 0:
+        sensorList = 1
     # 180degからどれだけ回転するのか
     cwDeg = np.arctan2(sensorList[2]/sensorList[1])
     ccwDeg = np.arctan2(sensorList[0]/sensorList[1])
@@ -181,11 +183,13 @@ def avoidWall(value):
     if degree <= 180:
         clockwise(50)
         time.sleep(degree / turnTime)
+        print ("cw:" + str(degree))
 
     # ccw回転
     else:
         cclockwise(50)
         time.sleep((360 - degree) / turnTime)
+        print ("ccw:" + str(degree))
 
 
 def sensorLoop():
@@ -196,7 +200,6 @@ def sensorLoop():
 
 if __name__ == '__main__':
     setup()
-    stop()
     try:
         print ("Automatic running...")
         times = time.time()
@@ -204,6 +207,7 @@ if __name__ == '__main__':
         t.start()
         time.sleep(3)      #情報取得までのインターバル
         while True:
+            print (sensorList)
             if error == 0:
                 forward(50)
             # error = 1の時
