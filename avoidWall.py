@@ -8,7 +8,7 @@
 
 """モジュールインポート"""
 import RPi.GPIO as GPIO
-import wiringpi2
+import wiringpi
 import time
 import smbus
 import sys
@@ -141,7 +141,7 @@ def readSensor():
             GPIO.output(spi_clk, 0)
 
         GPIO.output(spi_ss, 1)
-        
+
         print ("ch:" + str(ch) + ", value:" + str(value))
 
         if (value > 2300):
