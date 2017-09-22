@@ -8,7 +8,7 @@
 
 """モジュールインポート"""
 import RPi.GPIO as GPIO
-import wiringpi
+import wiringpi2
 import time
 import smbus
 import sys
@@ -26,6 +26,8 @@ spi_clk = 11
 spi_mosi = 10
 spi_miso = 9
 spi_ss = 8
+#赤外線センサーのピン定義
+sensor_switch = 25
 
 """変数定義"""
 #走行時間:1min
@@ -63,7 +65,7 @@ def setup():
     GPIO.setup(spi_miso, GPIO.IN)
     GPIO.setup(spi_clk, GPIO.OUT)
     GPIO.setup(spi_ss, GPIO.OUT)
-    #GPIO.setup(sensor_switch,GPIO.OUT)
+    GPIO.setup(sensor_switch,GPIO.OUT)
 
     """モータ関数"""
     #前進
@@ -206,6 +208,7 @@ def sensorLoop():
 if __name__ == '__main__':
     setup()
     try:
+        GPIO.output(sensor_switch, 1)   #赤外線センサを有効化
         print ("wait...")
         t = threading.Thread(target=sensorLoop)
         t.start()
