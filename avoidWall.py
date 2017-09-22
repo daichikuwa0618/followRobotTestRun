@@ -13,13 +13,7 @@ import time
 import smbus
 import sys
 import threading
-from gpiozero import MCP3208 # ADCを使用するパッケージ
 import numpy as np
-
-adc0 = MCP3208(channel = 0)
-adc1 = MCP3208(channel = 1)
-adc2 = MCP3208(channel = 2)
-adc3 = MCP3208(channel = 3)
 
 """ピン定義"""
 #各モータのピン定義
@@ -32,8 +26,7 @@ spi_clk = 11
 spi_mosi = 10
 spi_miso = 9
 spi_ss = 8
-#赤外線センサーのピン定義
-sensor_switch = 25
+
 """変数定義"""
 #走行時間:1min
 jikan = 60
@@ -109,7 +102,8 @@ def stop():
 # センサの値に応じて逃げるべきかも判断する
 def readSensor():
     i = 0
-    global error, signal
+    global error
+    global sensorList
     #使用しているchの数だけrangeの中の値を変更する
     for ch in range(3):
         #ReadSensor()
