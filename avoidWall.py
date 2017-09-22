@@ -144,6 +144,8 @@ def readSensor():
 
         GPIO.output(spi_ss, 1)
 
+        print ("ch:" + str(ch) + ", value:" + str(value))
+
         if (value > 2300):
             print ("The channel of responsing:" + str(ch))
 
@@ -162,8 +164,7 @@ def readSensor():
         error = 0
 
 # 実際に逃げる関数
-def avoidWall():
-    global sensorValue0, sensorValue1, sensorValue2
+def avoidWall(value):
     # センサの配置
     # ch0:右 ch1:正面 ch2:左
     # 角度から秒数に変換する定数
@@ -180,8 +181,8 @@ def avoidWall():
     if sensorValue1 == 0:
         sensorValue1 = 1
     # 180degからどれだけ回転するのか
-    cwDeg = np.arctan2(sensorValue2, sensorValue1)
-    ccwDeg = np.arctan2(sensorValue0, sensorValue1)
+    cwDeg = np.arctan2(sensorValue2/sensorValue1)
+    ccwDeg = np.arctan2(sensorValue0/sensorValue1)
     # 角度の補正
     degree = degree + cwDeg - ccwDeg
 
@@ -196,8 +197,6 @@ def avoidWall():
         cclockwise(50)
         time.sleep((360 - degree) / turnTime)
         print ("ccw:" + str(degree))
-
-    print ("Avoiding complete. here, go back to normal operation...")
 
 
 def sensorLoop():
@@ -217,7 +216,7 @@ if __name__ == '__main__':
         print ("Automatic running...")
         times = time.time()
         while True:
-            print ("[" + str(sensorValue0) + "," + str(sensorValue1) + "," + str(sensorValue2) + "]")
+            #print ("[" + str(sensorValue0) + "," + str(sensorValue1) + "," + str(sensorValue2) + "]")
             if error == 0:
                 forward(50)
             # error = 1の時
