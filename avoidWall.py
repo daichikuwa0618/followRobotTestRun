@@ -39,7 +39,9 @@ length = 0
 error = 0
 signal = 0
 # センサーの値
-sensorList = [0, 0, 0]
+sensorValue0 = 0
+sensorValue1 = 0
+sensorValue2 = 0
 # 近いと判断する閾値
 NEAR = 2300
 
@@ -102,8 +104,7 @@ def stop():
 # センサの値に応じて逃げるべきかも判断する
 def readSensor():
     i = 0
-    global error
-    global sensorList
+    global error, sensorValue0, sensorValue1, sensorValue2
     #使用しているchの数だけrangeの中の値を変更する
     for ch in range(3):
         #ReadSensor()
@@ -142,10 +143,16 @@ def readSensor():
         if (value > 2300):
             print ("The channel of responsing:" + str(ch))
 
-        sensorList[ch] = value
+        # リストでうまくいかなかったので仕方なく力技の代入
+        if ch == 0:
+            sensorValue0 = value
+        elif ch == 1:
+            sensorValue1 = value
+        else:
+            sensorValue2 = value
 
     # 逃げるかの判断
-    if np.sqrt((sensorList[1] ** 2) + ((sensorList[0] + sensorList[2]) ** 2)) > NEAR:
+    if np.sqrt((sensorValue1 ** 2) + ((sensorValue0 + sensorValue2) ** 2)) > NEAR:
         error = 1
     else:
         error = 0
@@ -165,11 +172,11 @@ def avoidWall(value):
     # 逃げる角度
     degree = 180
     # ZeroDevisionError回避
-    if sensorList[1] == 0:
-        sensorList = 1
+    if sensorValue1 == 0:
+        sensorValue1 = 1
     # 180degからどれだけ回転するのか
-    cwDeg = np.arctan2(sensorList[2]/sensorList[1])
-    ccwDeg = np.arctan2(sensorList[0]/sensorList[1])
+    cwDeg = np.arctan2(sensorValue2/sensorValue1)
+    ccwDeg = np.arctan2(sensorValue0/sensorValue1)
     # 角度の補正
     degree = degree + cwDeg - ccwDeg
 
@@ -195,19 +202,21 @@ def sensorLoop():
 if __name__ == '__main__':
     setup()
     try:
+        print ("wait...")
+        time.sleep(10)
         print ("Automatic running...")
         times = time.time()
         t = threading.Thread(target=sensorLoop)
         t.start()
         time.sleep(3)      #情報取得までのインターバル
         while True:
-            print (sensorList)
+            print ("[" + str(sensorValue0) + "," + str(sensorValue1) + "," + str(sensorValue2) + "]")
             if error == 0:
                 forward(50)
             # error = 1の時
             else:
                 print("avoiding")
-                avoidWall(sensorList)
+                avoidWall()
             if jikan < (time.time() - times):
                 print ("End of running")
                 break
