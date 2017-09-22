@@ -175,29 +175,37 @@ def avoidWall(value0, value1, value2):
     # 角度の補正
     degree = degree + cwDeg - ccwDeg
 
-    nowTime = time.time()
+    #nowTime = time.time()
 
     # cw回転
     if degree <= 180:
+        """
         startTime = time.time()
         while nowTime - startTime < (degree / turnTime):
             clockwise(100)
             nowTime = time.time()
             time.sleep(0.1)
             print ("cw...")
+        """
+        clockwise(80)
         print ("cw:" + str(degree))
-        stop()
 
     # ccw回転
     else:
+        """
         startTime = time.time()
         while nowTime - startTime < ((360 - degree) / turnTime):
             cclockwise(100)
             nowTime = time.time()
             time.sleep(0.1)
             print ("ccw...")
+        """
+        degree = 360 - degree
+        cclockwise(80)
         print ("ccw:" + str(degree))
-        stop()
+
+    time.sleep(degree / turnTime)
+    stop()
 
     print ("Avoiding complete. here, go back to normal operation...")
 
@@ -206,7 +214,7 @@ def sensorLoop():
     while True:
         readSensor()
         #gpioZeroReadSensor()
-        time.sleep(0.2)
+        time.sleep(0.1)
 
 if __name__ == '__main__':
     setup()
@@ -230,6 +238,10 @@ if __name__ == '__main__':
                 print ("End of running")
                 break
             time.sleep(0.1)
+    except KeyboardInterrupt:
+        stop()
+        GPIO.cleanup()
+        t._Thread__stop()
     finally:
         stop()
         GPIO.cleanup()
