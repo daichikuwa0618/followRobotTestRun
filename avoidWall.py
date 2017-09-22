@@ -40,12 +40,8 @@ deg = 0
 length = 0
 error = 0
 signal = 0
-"""
 # センサーの値
-sensorValue0 = 0
-sensorValue1 = 0
-sensorValue2 = 0
-"""
+sensorList = [0, 0, 0]
 # 近いと判断する閾値
 NEAR = 2300
 
@@ -108,7 +104,7 @@ def stop():
 # センサの値に応じて逃げるべきかも判断する
 def readSensor():
     i = 0
-    global error, sensorValue0, sensorValue1, sensorValue2
+    global error, sensorList
     #使用しているchの数だけrangeの中の値を変更する
     for ch in range(3):
         #ReadSensor()
@@ -141,61 +137,67 @@ def readSensor():
             if (GPIO.input(spi_miso)):
                 value |= 0x1
             GPIO.output(spi_clk, 0)
-
         GPIO.output(spi_ss, 1)
 
-        if (value > 2300):
-            print ("The channel of responsing:" + str(ch))
-
-        # リストでうまくいかなかったので仕方なく力技の代入
-        if ch == 0:
-            sensorValue0 = value
-        elif ch == 1:
-            sensorValue1 = value
-        else:
-            sensorValue2 = value
+        sensorList[ch] = value
 
     # 逃げるかの判断
-    if np.sqrt((sensorValue1 ** 2) + ((sensorValue0 + sensorValue2) ** 2)) > NEAR:
+    if np.sqrt((sensorList[1] ** 2) + ((sensorList[0] + sensorList[2]) ** 2)) > NEAR:
         error = 1
     else:
         error = 0
 
 # 実際に逃げる関数
-def avoidWall():
-    global sensorValue0, sensorValue1, sensorValue2
+def avoidWall(value0, value1, value2):
     # センサの配置
     # ch0:右 ch1:正面 ch2:左
     # 角度から秒数に変換する定数
-    turnTime = 90
+    turnTime = 70
+    resetNum = 80 #補正用変数
     stop()
     # 少し後退する
-    back(25)
+    #back(25)
     time.sleep(1)
     stop()
 
     # 逃げる角度
     degree = 180
     # ZeroDevisionError回避
-    if sensorValue1 == 0:
-        sensorValue1 = 1
+    if value1 <= resetNum:
+        value1 = resetNum + 1
+    if value0 <= resetNum:
+        value0 = resetNum
+    if value2 <= resetNum:
+        value2 = resetNum
     # 180degからどれだけ回転するのか
-    cwDeg = np.arctan2(sensorValue2, sensorValue1)
-    ccwDeg = np.arctan2(sensorValue0, sensorValue1)
+    cwDeg = np.rad2deg(np.arctan2(value2-resetNum, value1-resetNum))
+    ccwDeg = np.rad2deg(np.arctan2(value0-resetNum, value1-resetNum))
     # 角度の補正
     degree = degree + cwDeg - ccwDeg
 
+    nowTime = time.time()
+
     # cw回転
     if degree <= 180:
-        clockwise(50)
-        time.sleep(degree / turnTime)
+        startTime = time.time()
+        while nowTime - startTime < (degree / turnTime):
+            clockwise(100)
+            nowTime = time.time()
+            time.sleep(0.1)
+            print ("cw...")
         print ("cw:" + str(degree))
+        stop()
 
     # ccw回転
     else:
-        cclockwise(50)
-        time.sleep((360 - degree) / turnTime)
+        startTime = time.time()
+        while nowTime - startTime < ((360 - degree) / turnTime):
+            cclockwise(100)
+            nowTime = time.time()
+            time.sleep(0.1)
+            print ("ccw...")
         print ("ccw:" + str(degree))
+        stop()
 
     print ("Avoiding complete. here, go back to normal operation...")
 
@@ -209,7 +211,7 @@ def sensorLoop():
 if __name__ == '__main__':
     setup()
     try:
-        GPIO.output(sensor_switch, 1)   #赤外線センサを有効化
+        GPIO.output(sensor_switch, 1) #赤外線センサを有効化
         print ("wait...")
         t = threading.Thread(target=sensorLoop)
         t.start()
@@ -217,16 +219,17 @@ if __name__ == '__main__':
         print ("Automatic running...")
         times = time.time()
         while True:
-            print ("[" + str(sensorValue0) + "," + str(sensorValue1) + "," + str(sensorValue2) + "]")
+            print ("[" + str(sensorList[0]) + "," + str(sensorList[1]) + "," + str(sensorList[2]) + "]")
             if error == 0:
-                forward(50)
+                forward(100)
             # error = 1の時
             else:
                 print("avoiding")
-                avoidWall()
+                avoidWall(sensorList[0], sensorList[1], sensorList[2])
             if jikan < (time.time() - times):
                 print ("End of running")
                 break
+            time.sleep(0.1)
     finally:
         stop()
         GPIO.cleanup()
