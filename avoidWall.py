@@ -63,8 +63,8 @@ def setup():
     GPIO.setup(spi_ss, GPIO.OUT)
     GPIO.setup(sensor_switch,GPIO.OUT)
 
-    """モータ関数"""
-    #前進
+"""モータ関数"""
+# 前進
 def forward(pwm):
     wiringpi2.softPwmWrite(IN1, pwm)
     wiringpi2.softPwmWrite(IN2, 0)
@@ -100,14 +100,13 @@ def stop():
     wiringpi2.softPwmWrite(IN4, 100)
     time.sleep(0.1)
 
+
 # ADコンバータを用いた赤外線センサーの関数
 # センサの値に応じて逃げるべきかも判断する
 def readSensor():
     i = 0
     global error, sensorList
-    #使用しているchの数だけrangeの中の値を変更する
     for ch in range(3):
-        #ReadSensor()
         GPIO.output(spi_ss, 0)
         GPIO.output(spi_clk, 0)
         GPIO.output(spi_mosi, 0)
@@ -127,9 +126,9 @@ def readSensor():
         GPIO.output(spi_clk, 0)
         GPIO.output(spi_clk, 1)
         GPIO.output(spi_clk, 0)
-        #ここまでch指定
+        # channel designation
 
-        #センサーの値を格納する変数
+        # variable containing values of each sensor
         value = 0
         for i in range(12):
             value <<= 1
@@ -141,11 +140,12 @@ def readSensor():
 
         sensorList[ch] = value
 
-    # 逃げるかの判断
+    # judge whether avoid or not
     if np.sqrt((sensorList[1] ** 2) + ((sensorList[0] + sensorList[2]) ** 2)) > NEAR:
         error = 1
     else:
         error = 0
+
 
 # 実際に逃げる関数
 def avoidWall(value0, value1, value2):
@@ -179,27 +179,11 @@ def avoidWall(value0, value1, value2):
 
     # cw回転
     if degree <= 180:
-        """
-        startTime = time.time()
-        while nowTime - startTime < (degree / turnTime):
-            clockwise(100)
-            nowTime = time.time()
-            time.sleep(0.1)
-            print ("cw...")
-        """
         clockwise(80)
         print ("cw:" + str(degree))
 
     # ccw回転
     else:
-        """
-        startTime = time.time()
-        while nowTime - startTime < ((360 - degree) / turnTime):
-            cclockwise(100)
-            nowTime = time.time()
-            time.sleep(0.1)
-            print ("ccw...")
-        """
         degree = 360 - degree
         cclockwise(80)
         print ("ccw:" + str(degree))
@@ -207,44 +191,49 @@ def avoidWall(value0, value1, value2):
     time.sleep(degree / turnTime)
     stop()
 
-    print ("Avoiding complete. here, go back to normal operation...")
+    print ("Avoiding complete. Here, go back to normal operation...")
+    time.sleep(1)
 
 
 def sensorLoop():
     while True:
         readSensor()
-        #gpioZeroReadSensor()
         time.sleep(0.1)
 
+
+# ========== main ==========
 if __name__ == '__main__':
     setup()
     try:
-        GPIO.output(sensor_switch, 1) #赤外線センサを有効化
+        GPIO.output(sensor_switch, 1) # enable sensors
         print ("wait...")
         t = threading.Thread(target=sensorLoop)
         t.start()
         time.sleep(wait_time)
         print ("Automatic running...")
-        times = time.time()
+        times = time.time() # start time
         while True:
             print ("[" + str(sensorList[0]) + "," + str(sensorList[1]) + "," + str(sensorList[2]) + "]")
             if error == 0:
-                forward(100)
-            # error = 1の時
+                forward(80)
+            # error true
             else:
                 print("avoiding")
                 avoidWall(sensorList[0], sensorList[1], sensorList[2])
+            # Timer
             if jikan < (time.time() - times):
                 print ("End of running")
                 break
             time.sleep(0.1)
+    # ctrl + C exception
     except KeyboardInterrupt:
         stop()
         GPIO.cleanup()
         t._Thread__stop()
+    # operate here when this program ends
     finally:
         stop()
         GPIO.cleanup()
-        t._Thread__stop() #マルチスレッドの強制終了
+        t._Thread__stop()
 
 # end of program
