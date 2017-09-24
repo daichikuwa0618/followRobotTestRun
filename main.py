@@ -4,7 +4,7 @@
 # Created Daichi Hayashi 2017/09/24
 # From Yonago Institute of Technology
 
-# === Discription ===
+# +++++ Discription +++++
 #   escape from wall whenever the robot moveServo
 #   and, follow to anyone who is moveing
 
@@ -15,6 +15,7 @@ import time
 import sys
 import threading
 import DETECT3
+import numpy as np
 from time import sleep
 
 # ========== PIN assign ==========
@@ -30,6 +31,19 @@ spi_miso = 9
 spi_ss = 8
 # Sensor sensor
 sensor_switch = 2
+# signals from Inoue Lab. S0:MSB, S10:LSB
+S0 = 7      # Lower left 8 合図
+S1 = 5      # Lower left 6 識別(High:Distance, Low:Angle)
+S2 = 6      # Lower left 5
+S3 = 13     # Lower left 4
+S4 = 19     # Lower left 3
+S5 = 26     # Lower left 2
+S6 = 12     # Lower right 5
+S7 = 16     # Lower right 3
+S8 = 20     # Lower right 2
+S9 = 21     # Lower right 1
+S10 = 25    # if this is High, isn't working
+paraList = [S0, S1, S2, S3, S4, S5, S6, S7, S8, S9, S10] # parallel list
 
 # ========== variables ==========
 # runTime:[sec]
@@ -45,11 +59,15 @@ error = 0
 sensorList = [0, 0, 0]
 # Threshold of sensor
 nearValue = 2300
+# parallel communication
+bitToRange = 360/256  # bit情報から角度に変換
+rangeTrans = 2        # bit情報から距離に変換(2bit左シフト)
 
 # ========== setup ==========
 def setup():
     GPIO.setmode(GPIO.BCM)
     wiringpi2.wiringPiSetupGpio()
+    # Moters
     wiringpi2.pinMode(IN1, wiringpi2.GPIO.PWM_OUTPUT)
     wiringpi2.pinMode(IN2, wiringpi2.GPIO.PWM_OUTPUT)
     wiringpi2.pinMode(IN3, wiringpi2.GPIO.PWM_OUTPUT)
@@ -59,11 +77,15 @@ def setup():
     wiringpi2.softPwmCreate(IN2, 100, 100)
     wiringpi2.softPwmCreate(IN3, 100, 100)
     wiringpi2.softPwmCreate(IN4, 100, 100)
+    # AD-converter
     GPIO.setup(spi_mosi, GPIO.OUT)
     GPIO.setup(spi_miso, GPIO.IN)
     GPIO.setup(spi_clk, GPIO.OUT)
     GPIO.setup(spi_ss, GPIO.OUT)
     GPIO.setup(sensor_switch,GPIO.OUT)
+    # parallel communication
+    GPIO.setup(S0, GPIO.OUT)
+    GPIO.setup(paraList, GPIO.IN)
 
 # ========== Func of Moter ==========
 # Go forward
@@ -101,6 +123,40 @@ def stop():
     wiringpi2.softPwmWrite(IN3, 100)
     wiringpi2.softPwmWrite(IN4, 100)
     time.sleep(0.1)
+
+# ========== Func parallel ==========
+def signalInput(signal):
+    for cnt in range(8):
+        if GPIO.input(chan_list[cnt+2]):
+            signal[cnt] = 1
+        else:
+            signal[cnt] = 0
+        return signal
+
+# ========== Func return results ==========
+def signalGet():
+    try:
+        # return values when the device is working fine
+        if not GPIO.input(chan_list[10]):
+            distance = angle = np.zeros(8, dtype=np.int)
+            GPIO.output(S0, 1)
+            GPIO.wait_for_edge(S1, GPIO.RISING)
+            distance = signalInput(distance)
+            GPIO.wait_for_edge(S1, GPIO.FALLING)
+            angle = signalInput(angle)
+            GPIO.output(S0, 0)
+            distance = "".join(map(str, distance))
+            angle = "".join(map(str, angle))
+            result = [int(distance,2)<<rangeTrans, int(angle,2)*bitToRange]
+            return result
+
+    except Exception as e:
+        pass
+    else:
+        pass
+    finally:
+        #GPIO.remove_event_detect(S1)
+        #GPIO.cleanup()
 
 # ========== readSensor ==========
 # this func also judge whether avoid or not
@@ -205,8 +261,11 @@ if __name__ == '__main__':
     try:
         GPIO.output(sensor_switch, 1) # enable sensors
         print ("wait...")
-        t = threading.Thread(target=sensorLoop)
-        t.start()
+        # multi Threading
+        signalThread = threading.Thread(target = signalGet)
+        sensorThread = threading.Thread(target = sensorLoop)
+        signalThread.start()
+        sensorThread.start()
         time.sleep(wait_time)
         print ("Automatic running...")
         startTime = time.time()
@@ -227,12 +286,13 @@ if __name__ == '__main__':
     except KeyboardInterrupt:
         stop()
         GPIO.cleanup()
-        t._Thread__stop()
+        signalThread._Thread__stop()
+        sensorThread._Thread__stop()
     # operate here when this program ends
     finally:
         stop()
         GPIO.cleanup()
-        t._Thread__stop()
-
+        signalThread._Thread__stop()
+        sensorThread._Thread__stop()
 
 # end of program
