@@ -17,17 +17,17 @@ import numpy as np
 
 """ピン定義"""
 #各モータのピン定義
-IN1 = 5
-IN2 = 6
-IN3 = 18
-IN4 = 23
+IN1 = 3
+IN2 = 4
+IN3 = 17
+IN4 = 27
 #ADコンバータのピン定義
 spi_clk = 11
 spi_mosi = 10
 spi_miso = 9
 spi_ss = 8
 #赤外線センサーのピン定義
-sensor_switch = 25
+sensor_switch = 2
 
 """変数定義"""
 #走行時間:1min
