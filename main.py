@@ -309,12 +309,6 @@ if __name__ == '__main__':
                 print ("End of running")
                 break
             time.sleep(0.1) # interval
-    # ctrl + C exception
-    except KeyboardInterrupt:
-        stop()
-        GPIO.cleanup()
-        signalThread._Thread__stop()
-        sensorThread._Thread__stop()
     # operate here when this program ends
     finally:
         stop()
