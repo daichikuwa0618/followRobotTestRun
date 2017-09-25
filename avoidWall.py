@@ -152,7 +152,7 @@ def avoidWall(value0, value1, value2):
     # センサの配置
     # ch0:右 ch1:正面 ch2:左
     # 角度から秒数に変換する定数
-    turnTime = 70
+    turnTime = 90
     resetNum = 80 #補正用変数
     stop()
     # 少し後退する
@@ -194,12 +194,10 @@ def avoidWall(value0, value1, value2):
     print ("Avoiding complete. Here, go back to normal operation...")
     time.sleep(1)
 
-
 def sensorLoop():
     while True:
         readSensor()
         time.sleep(0.1)
-
 
 # ========== main ==========
 if __name__ == '__main__':
@@ -225,11 +223,6 @@ if __name__ == '__main__':
                 print ("End of running")
                 break
             time.sleep(0.1)
-    # ctrl + C exception
-    except KeyboardInterrupt:
-        stop()
-        GPIO.cleanup()
-        t._Thread__stop()
     # operate here when this program ends
     finally:
         stop()
