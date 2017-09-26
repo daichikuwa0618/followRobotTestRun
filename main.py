@@ -200,7 +200,7 @@ def avoidWall(value0, value1, value2):
     # mapping of sensor
     # ch0:Right ch1:Front ch2:Left
     # 角度から秒数に変換する定数
-    turnTime = 70 # deviding const translating from deg to sec
+    turnTime = 90 # deviding const translating from deg to sec
     resetNum = 80 # variable of correction
     stop()
     # Go back a little bit
@@ -313,7 +313,7 @@ if __name__ == '__main__':
     finally:
         stop()
         GPIO.cleanup()
-        signalThread._Thread__stop()
+        #signalThread._Thread__stop()
         sensorThread._Thread__stop()
 
 # end of program
