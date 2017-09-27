@@ -1,6 +1,8 @@
 #!/usr/bin/env python
 # -*- coding: utf-8 -*-
 
+#動いていないというビットがたったらもう一度送信してもらう
+
 import RPi.GPIO as GPIO
 import time
 import sys
@@ -36,14 +38,18 @@ def signalInput(signal):
 
 def signalGet():
     try:
-        # return values when the device is working fine
-        if not GPIO.input(chan_list[10]):
-            distance = angle = np.zeros(8, dtype=np.int)
-            GPIO.output(S0, 1)
+        distance = angle = np.zeros(8, dtype=np.int)
+        GPIO.output(S0, 1)
+        # not moving
+        if GPIO.input(S10):
+            GPIO.output(S0, 0)
+            print ("No motion. Try again...")
+        # moving
+        else:
             GPIO.wait_for_edge(S1, GPIO.RISING)
-            signalInput(distance)
+            distance = signalInput(distance)
             GPIO.wait_for_edge(S1, GPIO.FALLING)
-            signalInput(angle)
+            angle = signalInput(angle)
             GPIO.output(S0, 0)
             distance = "".join(map(str, distance))
             angle = "".join(map(str, angle))
