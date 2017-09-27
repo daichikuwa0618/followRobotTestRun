@@ -19,8 +19,8 @@ import numpy as np
 #各モータのピン定義
 IN1 = 3
 IN2 = 4
-IN3 = 17
-IN4 = 27
+IN3 = 14
+IN4 = 15
 #ADコンバータのピン定義
 spi_clk = 11
 spi_mosi = 10
@@ -177,16 +177,16 @@ def avoidWall(value0, value1, value2):
 
     #nowTime = time.time()
 
-    # cw回転
-    if degree <= 180:
-        clockwise(80)
-        print ("cw:" + str(degree))
-
     # ccw回転
-    else:
-        degree = 360 - degree
+    if degree <= 180:
         cclockwise(80)
         print ("ccw:" + str(degree))
+
+    # cw回転
+    else:
+        degree = 360 - degree
+        clockwise(80)
+        print ("cw:" + str(degree))
 
     time.sleep(degree / turnTime)
     stop()
