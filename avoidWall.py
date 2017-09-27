@@ -43,7 +43,7 @@ signal = 0
 # センサーの値
 sensorList = [0, 0, 0]
 # 近いと判断する閾値
-NEAR = 2300
+NEAR = 2100
 
 def setup():
     GPIO.setmode(GPIO.BCM)
@@ -104,7 +104,7 @@ def stop():
 # ADコンバータを用いた赤外線センサーの関数
 # センサの値に応じて逃げるべきかも判断する
 def readSensor():
-    i = 0
+    resetNum = 1000 # 補正用数値
     global error, sensorList
     for ch in range(3):
         GPIO.output(spi_ss, 0)
@@ -139,6 +139,8 @@ def readSensor():
         GPIO.output(spi_ss, 1)
 
         sensorList[ch] = value
+        if sensorList[ch] < resetNum:
+            sensorList[ch] = 0
 
     # judge whether avoid or not
     if np.sqrt((sensorList[1] ** 2) + ((sensorList[0] + sensorList[2]) ** 2)) > NEAR:
@@ -163,30 +165,26 @@ def avoidWall(value0, value1, value2):
     # 逃げる角度
     degree = 180
     # ZeroDevisionError回避
-    if value1 <= resetNum:
-        value1 = resetNum + 1
-    if value0 <= resetNum:
-        value0 = resetNum
-    if value2 <= resetNum:
-        value2 = resetNum
+    if value1 == 0:
+        value1 = 1
     # 180degからどれだけ回転するのか
-    cwDeg = np.rad2deg(np.arctan2(value2-resetNum, value1-resetNum))
-    ccwDeg = np.rad2deg(np.arctan2(value0-resetNum, value1-resetNum))
+    cwDeg = np.rad2deg(np.arctan2(value0, value1))
+    ccwDeg = np.rad2deg(np.arctan2(value2, value1))
     # 角度の補正
     degree = degree + cwDeg - ccwDeg
 
     #nowTime = time.time()
 
-    # ccw回転
-    if degree <= 180:
-        cclockwise(80)
-        print ("ccw:" + str(degree))
-
     # cw回転
-    else:
-        degree = 360 - degree
+    if degree <= 180:
         clockwise(80)
         print ("cw:" + str(degree))
+
+    # ccw回転
+    else:
+        degree = 360 - degree
+        cclockwise(80)
+        print ("ccw:" + str(degree))
 
     time.sleep(degree / turnTime)
     stop()

@@ -6,7 +6,7 @@
 
 # +++++ Discription +++++
 #   escape from wall whenever the robot moveServo
-#   and, follow to anyone who is moveing
+#   and, follow to anyone who is moving
 
 # ========== import ==========
 import RPi.GPIO as GPIO
@@ -140,6 +140,7 @@ def signalGet():
     GPIO.output(S0, 1)
     # no motion
     if GPIO.input(S10):
+        # resend initial signal
         GPIO.output(S0, 0)
         print ("No motion. Try again...")
     # moving
@@ -151,11 +152,12 @@ def signalGet():
         GPIO.output(S0, 0)
         distance = "".join(map(str, distance))
         angle = "".join(map(str, angle))
-        result = [int(distance,2)<<rangeTrans, int(angle,2)*bitToRange]
+        result = [int(distance,2), int(angle,2)*bitToRange]
 
 # ========== readSensor ==========
 # this func also judge whether avoid or not
 def readSensor():
+    resetNum = 1000 # 補正用数値
     global error, sensorList
     for ch in range(3):
         GPIO.output(spi_ss, 0)
@@ -190,6 +192,8 @@ def readSensor():
         GPIO.output(spi_ss, 1)
 
         sensorList[ch] = value
+        if sensorList[ch] < resetNum:
+            sensorList[ch] = 0
 
     # judge whether avoid or not
     if np.sqrt((sensorList[1] ** 2) + ((sensorList[0] + sensorList[2]) ** 2)) > NEAR:
@@ -203,7 +207,6 @@ def avoidWall(value0, value1, value2):
     # ch0:Right ch1:Front ch2:Left
     # 角度から秒数に変換する定数
     turnTime = 90 # deviding const translating from deg to sec
-    resetNum = 80 # variable of correction
     stop()
     # Go back a little bit
     back(50)
@@ -213,19 +216,13 @@ def avoidWall(value0, value1, value2):
     # avoiding angle
     degree = 180
     # ZeroDevisionError
-    if value1 <= resetNum:
-        value1 = resetNum + 1
-    if value0 <= resetNum:
-        value0 = resetNum
-    if value2 <= resetNum:
-        value2 = resetNum
+    if value1 == 0:
+        value1 = 1
     # 180degからどれだけ回転するのか
-    cwDeg = np.rad2deg(np.arctan2(value2 - resetNum, value1 - resetNum))
-    ccwDeg = np.rad2deg(np.arctan2(value0 - resetNum, value1 - resetNum))
+    cwDeg = np.rad2deg(np.arctan2(value0, value1))
+    ccwDeg = np.rad2deg(np.arctan2(value2, value1))
     # 角度の補正
     degree = degree + cwDeg - ccwDeg
-
-    #nowTime = time.time()
 
     # cw回転
     if degree <= 180:
@@ -248,7 +245,8 @@ def avoidWall(value0, value1, value2):
 def sensorLoop():
     while True:
         readSensor()
-        signalGet() # from Inoue Lab.
+        if not error:
+            signalGet() # from Inoue Lab.
         time.sleep(0.1)
 
 # ========== main ==========
@@ -303,6 +301,7 @@ if __name__ == '__main__':
                             print ("角度補正: CW")
                             clockWise(50)
                             forwardFlg = 0
+                print ("dst=" + str(result[0]) + ",ang=" + str(result[1]))
             # error
             else:
                 print("avoiding")
