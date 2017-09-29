@@ -85,6 +85,7 @@ def setup():
     # parallel communication
     GPIO.setup(S0, GPIO.OUT)
     GPIO.setup(paraList, GPIO.IN)
+    GPIO.output(S0, 0)
 
 # ========== Func of Moter ==========
 # Go forward
@@ -124,35 +125,41 @@ def stop():
     time.sleep(0.1)
 
 # ========== Func parallel ==========
-def signalInput(signal):
+def signalInput():
     for cnt in range(8):
         if GPIO.input(chan_list[cnt+2]):
-            signal[cnt] = 1
+            signal += "1"
         else:
-            signal[cnt] = 0
-        return signal
+            signal += "0"
+    return signal
 
 # ========== Func return results ==========
 # return distance[cm], angle[deg]
 def signalGet():
     global result
-    distance = angle = np.zeros(8, dtype=np.int)
+    distance = ""
+    angle = ""
     GPIO.output(S0, 1)
+    time.sleep(0.05)
     # no motion
     if GPIO.input(S10):
         # resend initial signal
         GPIO.output(S0, 0)
+        time.sleep(0.05)
         print ("No motion. Try again...")
     # moving
     else:
+        print ("waiting rising...")
         GPIO.wait_for_edge(S1, GPIO.RISING)
-        distance = signalInput(distance)
+        distance = signalInput()
+        print ("waiting falling...")
         GPIO.wait_for_edge(S1, GPIO.FALLING)
-        angle = signalInput(angle)
+        angle = signalInput()
         GPIO.output(S0, 0)
-        distance = "".join(map(str, distance))
-        angle = "".join(map(str, angle))
-        result = [int(distance,2), int(angle,2)*bitToRange]
+        time.sleep(0.05)
+        print (type(distance), type(angle))
+        result = [int(distance,2) * 4, int(angle,2)*bitToRange]
+        print (str(result))
 
 # ========== readSensor ==========
 # this func also judge whether avoid or not
@@ -314,6 +321,7 @@ if __name__ == '__main__':
     # operate here when this program ends
     finally:
         stop()
+        GPIO.remove_event_detect(S1)
         GPIO.cleanup()
         sensorThread._Thread__stop()
 

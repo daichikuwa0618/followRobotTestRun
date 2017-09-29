@@ -6,6 +6,7 @@
 import RPi.GPIO as GPIO
 import time
 import sys
+import numpy as np
 
 # ピン定義(S0がMSB, S9がLSB)
 S0 = 7      # 右下8 合図
@@ -29,37 +30,47 @@ def setup():
     GPIO.setup(S0, GPIO.OUT)
     GPIO.setup(chan_list[1:11], GPIO.IN)
 
-def signalInput(signal):
+def signalInput():
     for cnt in range(8):
         if GPIO.input(chan_list[cnt+2]):
-            signal[cnt] = 1
+            signal += "1"
         else:
-            signal[cnt] = 0
+            signal += "0"
+    return signal
 
 def signalGet():
-    try:
-        distance = angle = np.zeros(8, dtype=np.int)
-        GPIO.output(S0, 1)
-        # not moving
-        if GPIO.input(S10):
-            GPIO.output(S0, 0)
-            print ("No motion. Try again...")
-        # moving
-        else:
-            GPIO.wait_for_edge(S1, GPIO.RISING)
-            distance = signalInput(distance)
-            GPIO.wait_for_edge(S1, GPIO.FALLING)
-            angle = signalInput(angle)
-            GPIO.output(S0, 0)
-            distance = "".join(map(str, distance))
-            angle = "".join(map(str, angle))
-            result = [int(distance,2)<<RANGE, int(angle,2)*BIT_TO_RAD]
-            return result
-
-    except Exception as e:
-        pass
+    distance = ""
+    angle = ""
+    GPIO.output(S0, 1)
+    time.sleep(0.05)
+    print ("initial signal 1")
+    # not moving
+    if GPIO.input(S10):
+        GPIO.output(S0, 0)
+        time.sleep(0.05)
+        print ("No motion. Try again...")
+    # moving
     else:
-        pass
-    finally:
+        print ("wait rising")
+        GPIO.wait_for_edge(S1, GPIO.RISING)
+        distance = signalInput()
+        print ("wait falling")
+        GPIO.wait_for_edge(S1, GPIO.FALLING)
+        angle = signalInput()
+        GPIO.output(S0, 0)
+        time.sleep(0.05)
+        print (type(distance), type(angle))
+        result = [int(distance,2) * 4, int(angle,2)　*　BIT_TO_RAD]
+        print (str(result))
+
+
+# ========== main ==========
+if __name__ == '__main__':
+    setup()
+    try:
+        while True:
+            signalGet()
+            time.sleep(1)
+    except KeyboardInterrupt:
         GPIO.remove_event_detect(S1)
         GPIO.cleanup()
