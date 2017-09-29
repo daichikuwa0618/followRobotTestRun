@@ -45,8 +45,10 @@ if __name__ == '__main__':
             inputMode = int(input("moving? 0:yes, 1:no"))
             if inputMode == 1:
                 GPIO.output(chan_list[10], 1)
+                time.sleep(0.05)
             else:
                 GPIO.output(chan_list[10], 0)
+                time.sleep(0.05)
                 distance = int(input("distance...:"))
                 angle = int(input("angle(0 to 255)...:"))
 
@@ -70,6 +72,7 @@ if __name__ == '__main__':
                     else:
                         GPIO.output(chan_list[i + 2], 0)
                 GPIO.output(S1, 0) # send
+                time.sleep(0.05)
     finally:
         GPIO.cleanup()
 
