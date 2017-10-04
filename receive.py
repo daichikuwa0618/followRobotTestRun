@@ -28,9 +28,9 @@ RANGE = 2               # bit情報から距離に変換(2bit左シフト)
 def setup():
     GPIO.setmode(GPIO.BCM)
     GPIO.setup(S0, GPIO.OUT)
-    GPIO.setup(chan_list[1:11], GPIO.IN)
+    GPIO.setup(chan_list[1:11], GPIO.IN, pull_up_down=GPIO.PUD_DOWN)
 
-def signalInput():
+def signalInput(signal):
     for cnt in range(8):
         if GPIO.input(chan_list[cnt+2]):
             signal += "1"
@@ -41,26 +41,29 @@ def signalInput():
 def signalGet():
     distance = ""
     angle = ""
-    GPIO.output(S0, 1)
-    time.sleep(0.05)
     print ("initial signal 1")
+    GPIO.output(S0, GPIO.HIGH)
+    time.sleep(0.05)
     # not moving
     if GPIO.input(S10):
-        GPIO.output(S0, 0)
+        GPIO.output(S0, GPIO.LOW)
         time.sleep(0.05)
         print ("No motion. Try again...")
     # moving
     else:
-        print ("wait rising")
-        GPIO.wait_for_edge(S1, GPIO.RISING)
-        distance = signalInput()
-        print ("wait falling")
-        GPIO.wait_for_edge(S1, GPIO.FALLING)
-        angle = signalInput()
-        GPIO.output(S0, 0)
-        time.sleep(0.05)
+    print ("wait rising")
+    GPIO.wait_for_edge(S1, GPIO.RISING)
+    distance = signalInput(distance)
+    print ("wait falling")
+    GPIO.wait_for_edge(S1, GPIO.FALLING)
+    angle = signalInput(angle)
+    GPIO.output(S0, GPIO.LOW)
+    time.sleep(0.05)
+    if GPIO.input(S10):
+        print ("No Motion. Try Again...")
+    else:
         print (type(distance), type(angle))
-        result = [int(distance,2) * 4, int(angle,2)　*　BIT_TO_RAD]
+        result = [int(distance,2) * 4, int(angle,2) * BIT_TO_RAD]
         print (str(result))
 
 
@@ -71,6 +74,11 @@ if __name__ == '__main__':
         while True:
             signalGet()
             time.sleep(1)
+
     except KeyboardInterrupt:
+        GPIO.remove_event_detect(S1)
+        GPIO.cleanup()
+
+    finally:
         GPIO.remove_event_detect(S1)
         GPIO.cleanup()

@@ -22,8 +22,8 @@ from time import sleep
 # moter pins
 IN1          = 3
 IN2          = 4
-IN3          = 17
-IN4          = 27
+IN3          = 14
+IN4          = 15
 # AD-Converter
 spi_clk      = 11
 spi_mosi     = 10
@@ -32,7 +32,7 @@ spi_ss       = 8
 # Sensor sensor
 sensorSwitch = 2
 # signals from Inoue Lab. S0:MSB, S10:LSB
-S0           = 7  # Lower left 8 Signal Flag
+S0           = 7  # Lower right 8 Signal Flag
 S1           = 5  # Lower left 6 識別(High:Distance, Low:Angle)
 S2           = 6  # Lower left 5
 S3           = 13 # Lower left 4
@@ -84,7 +84,7 @@ def setup():
     GPIO.setup(sensorSwitch,GPIO.OUT)
     # parallel communication
     GPIO.setup(S0, GPIO.OUT)
-    GPIO.setup(paraList, GPIO.IN)
+    GPIO.setup(paraList[1:11], GPIO.IN)
     GPIO.output(S0, 0)
 
 # ========== Func of Moter ==========
@@ -141,6 +141,7 @@ def signalGet():
     angle = ""
     GPIO.output(S0, 1)
     time.sleep(0.05)
+    print("initial signal 1")
     # no motion
     if GPIO.input(S10):
         # resend initial signal
