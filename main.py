@@ -7,6 +7,9 @@
 # +++++ Discription +++++
 #   escape from wall whenever the robot moveServo
 #   and, follow to anyone who is moving
+#   if distance is 2m±50cm, stop
+#   if distance is over 2.5m, go forward
+#   if distance is under 1.5m, go back
 
 # ========== import ==========
 import RPi.GPIO as GPIO
