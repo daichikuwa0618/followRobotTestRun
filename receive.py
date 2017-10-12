@@ -30,7 +30,8 @@ def setup():
     GPIO.setup(S0, GPIO.OUT)
     GPIO.setup(chan_list[1:11], GPIO.IN, pull_up_down=GPIO.PUD_DOWN)
 
-def signalInput(signal):
+def signalInput():
+    signal = ""
     for cnt in range(8):
         if GPIO.input(chan_list[cnt+2]):
             signal += "1"
@@ -44,25 +45,20 @@ def signalGet():
     print ("initial signal 1")
     GPIO.output(S0, GPIO.HIGH)
     time.sleep(0.05)
-    # not moving
-    if GPIO.input(S10):
-        GPIO.output(S0, GPIO.LOW)
-        time.sleep(0.05)
-        print ("No motion. Try again...")
-    # moving
-    else:
+
     print ("wait rising")
     GPIO.wait_for_edge(S1, GPIO.RISING)
-    distance = signalInput(distance)
+    distance = signalInput()
     print ("wait falling")
     GPIO.wait_for_edge(S1, GPIO.FALLING)
-    angle = signalInput(angle)
+    angle = signalInput()
     GPIO.output(S0, GPIO.LOW)
     time.sleep(0.05)
+
     if GPIO.input(S10):
         print ("No Motion. Try Again...")
     else:
-        print (type(distance), type(angle))
+        print (distance, angle) # bit列で表示
         result = [int(distance,2) * 4, int(angle,2) * BIT_TO_RAD]
         print (str(result))
 
