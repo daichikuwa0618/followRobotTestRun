@@ -32,6 +32,7 @@ def setup():
 
 def signalInput():
     signal = ""
+    cnt = 0
     for cnt in range(8):
         if GPIO.input(chan_list[cnt+2]):
             signal += "1"
@@ -46,12 +47,24 @@ def signalGet():
     GPIO.output(S0, GPIO.HIGH)
     time.sleep(0.05)
 
-    print ("wait rising")
-    GPIO.wait_for_edge(S1, GPIO.RISING)
+    go = 0
+    print ("wait flag :HIGH ...")
+    while go == 0:
+        mae = GPIO.input(S1)
+        time.sleep(0.1)
+        if mae == 1 and mae == GPIO.input(S1):
+            go = 1
     distance = signalInput()
-    print ("wait falling")
-    GPIO.wait_for_edge(S1, GPIO.FALLING)
+
+    go = 0
+    print ("wait flag :LOW ...")
+    while go == 0:
+        mae = GPIO.input(S1)
+        time.sleep(0.1)
+        if mae == 0 and mae == GPIO.input(S1):
+            go = 1
     angle = signalInput()
+
     GPIO.output(S0, GPIO.LOW)
     time.sleep(0.05)
 
@@ -59,7 +72,9 @@ def signalGet():
         print ("No Motion. Try Again...")
     else:
         print (distance, angle) # bit列で表示
-        result = [int(distance,2) * 4, int(angle,2) * BIT_TO_RAD]
+        #result = [int(distance,2) * 4, float(int(angle,2)) * 360 / 256]
+        result = [int(distance,2), int(angle,2)]
+
         print (str(result))
 
 
@@ -72,9 +87,7 @@ if __name__ == '__main__':
             time.sleep(1)
 
     except KeyboardInterrupt:
-        GPIO.remove_event_detect(S1)
         GPIO.cleanup()
 
     finally:
-        GPIO.remove_event_detect(S1)
         GPIO.cleanup()
